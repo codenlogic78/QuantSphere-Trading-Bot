@@ -1,0 +1,64 @@
+{
+  "timestamp": "2025-09-16T15:55:18.185065",
+  "risk_metrics": {
+    "var_95": 2334.469227619026,
+    "var_99": 3663.86119021898,
+    "expected_shortfall": 3034.8099959047336,
+    "beta": 1.258429561200924,
+    "volatility": 5884.2841535738235,
+    "sharpe_ratio": 10.27822219687801,
+    "sortino_ratio": 50.79840837401912,
+    "max_drawdown": 0.5,
+    "calmar_ratio": 2400.0
+  },
+  "portfolio_composition": {
+    "AAPL": {
+      "weight": 0.14318706697459585,
+      "value": 15500.0,
+      "shares": 100,
+      "entry_price": 150.0,
+      "current_price": 155.0
+    },
+    "MSFT": {
+      "weight": 0.13625866050808313,
+      "value": 14750.0,
+      "shares": 50,
+      "entry_price": 300.0,
+      "current_price": 295.0
+    },
+    "GOOGL": {
+      "weight": 0.7205542725173211,
+      "value": 78000.0,
+      "shares": 30,
+      "entry_price": 2500.0,
+      "current_price": 2600.0
+    }
+  },
+  "total_portfolio_value": 108250.0,
+  "cash_allocation": 0,
+  "alerts": [
+    "\ud83d\udea8 HIGH CONCENTRATION: GOOGL represents 72.1% of portfolio",
+    "\ud83d\udcc9 DRAWDOWN WARNING: Current drawdown 50.0%",
+    "\ud83d\udcca HIGH VOLATILITY: Portfolio volatility 588428.4%"
+  ],
+  "suggestions": [
+    "\ud83d\udca1 Consider reducing concentration in: GOOGL (72.1%)",
+    "\ud83d\udd12 Consider tightening stop-losses to limit drawdown",
+    "\ud83d\udcb0 Consider maintaining higher cash allocation for opportunities"
+  ],
+  "risk_limits": {
+    "max_position_size": 0.2,
+    "max_sector_exposure": 0.4,
+    "max_correlation_exposure": 0.6,
+    "max_drawdown": 0.15,
+    "max_leverage": 1.0,
+    "min_liquidity_ratio": 0.1
+  },
+  "alert_thresholds": {
+    "position_concentration": 0.25,
+    "correlation_warning": 0.8,
+    "volatility_spike": 2.0,
+    "drawdown_warning": 0.1,
+    "liquidity_warning": 0.05
+  }
+}

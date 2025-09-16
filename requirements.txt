@@ -1,0 +1,13 @@
+alpaca-trade-api
+openai
+pandas
+numpy
+requests
+python-dotenv
+ta
+matplotlib
+seaborn>=0.11.0
+numpy>=1.21.0
+requests>=2.28.0
+python-dotenv>=0.19.0
+ta>=0.10.2

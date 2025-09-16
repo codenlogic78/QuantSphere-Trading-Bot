@@ -1,0 +1,82 @@
+{
+  "timestamp": "2025-09-16T15:47:47.456910",
+  "test_symbols": [
+    "AAPL",
+    "MSFT",
+    "GOOGL",
+    "TSLA",
+    "AMZN"
+  ],
+  "results": {
+    "AAPL": {
+      "signal": "BUY",
+      "strength": 1,
+      "indicators": {
+        "rsi": 56.09,
+        "macd": 0.08,
+        "macd_signal": -0.6157,
+        "bb_upper": 76.01,
+        "bb_lower": 68.42,
+        "bb_position": "WITHIN"
+      },
+      "current_price": 75.01
+    },
+    "MSFT": {
+      "signal": "BUY",
+      "strength": 1,
+      "indicators": {
+        "rsi": 57.14,
+        "macd": 1.3633,
+        "macd_signal": 0.8158,
+        "bb_upper": 113.33,
+        "bb_lower": 100.49,
+        "bb_position": "WITHIN"
+      },
+      "current_price": 110.22
+    },
+    "GOOGL": {
+      "signal": "SELL",
+      "strength": 1,
+      "indicators": {
+        "rsi": 38.43,
+        "macd": -2.5651,
+        "macd_signal": -2.3645,
+        "bb_upper": 122.73,
+        "bb_lower": 107.27,
+        "bb_position": "WITHIN"
+      },
+      "current_price": 111.16
+    },
+    "TSLA": {
+      "signal": "BUY",
+      "strength": 1,
+      "indicators": {
+        "rsi": 48.12,
+        "macd": -0.0169,
+        "macd_signal": -0.2221,
+        "bb_upper": 93.05,
+        "bb_lower": 89.33,
+        "bb_position": "WITHIN"
+      },
+      "current_price": 90.94
+    },
+    "AMZN": {
+      "signal": "BUY",
+      "strength": 1,
+      "indicators": {
+        "rsi": 55.15,
+        "macd": -0.1796,
+        "macd_signal": -0.7407,
+        "bb_upper": 123.63,
+        "bb_lower": 107.45,
+        "bb_position": "WITHIN"
+      },
+      "current_price": 119.84
+    }
+  },
+  "summary": {
+    "buy_signals": 4,
+    "sell_signals": 1,
+    "hold_signals": 0
+  }
+}
