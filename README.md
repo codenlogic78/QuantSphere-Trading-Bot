@@ -289,15 +289,6 @@ The developers assume no responsibility for trading losses incurred using this s
 
 ---
 
-## 📞 **Support & Community**
-
-- **Issues**: [GitHub Issues](https://github.com/codenlogic78/QuantSphere/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/codenlogic78/QuantSphere/discussions)
-- **Documentation**: [Wiki](https://github.com/codenlogic78/QuantSphere/wiki)
-- **Email**: support@quantsphere.ai
-
----
-
 <div align="center">
 
 **Built with ❤️ by the QuantSphere Team**
