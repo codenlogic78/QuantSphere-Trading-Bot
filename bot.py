@@ -10,6 +10,15 @@ import os
 from dotenv import load_dotenv
 from technical_indicators import TechnicalIndicators
 
+# Import Hybrid AI Integration
+try:
+    from hybrid_ai_integration import QuantSphereHybridAI, get_hybrid_analysis_for_gui
+    HYBRID_AI_AVAILABLE = True
+    print("🧠 Hybrid AI system loaded successfully!")
+except ImportError as e:
+    print(f"⚠️ Hybrid AI not available: {e}")
+    HYBRID_AI_AVAILABLE = False
+
 # Load environment variables
 load_dotenv()
 
@@ -143,6 +152,28 @@ class QuantSphereGUI:
         # Charts button
         self.charts_button = tk.Button(root, text="Open Advanced Charts", command=self.open_charts)
         self.charts_button.pack(pady=5)
+        
+        # Hybrid AI Controls
+        if HYBRID_AI_AVAILABLE:
+            self.hybrid_frame = tk.Frame(root)
+            self.hybrid_frame.pack(pady=10)
+            
+            tk.Label(self.hybrid_frame, text="🧠 Hybrid AI Analysis", font=('Arial', 12, 'bold')).pack()
+            
+            self.hybrid_buttons_frame = tk.Frame(self.hybrid_frame)
+            self.hybrid_buttons_frame.pack(pady=5)
+            
+            self.hybrid_analysis_button = tk.Button(self.hybrid_buttons_frame, text="🔍 Analyze Selected Stock", 
+                                                   command=self.show_hybrid_analysis, bg='lightblue')
+            self.hybrid_analysis_button.pack(side=tk.LEFT, padx=5)
+            
+            self.portfolio_recommendations_button = tk.Button(self.hybrid_buttons_frame, text="📊 Portfolio Recommendations", 
+                                                            command=self.show_portfolio_recommendations, bg='lightgreen')
+            self.portfolio_recommendations_button.pack(side=tk.LEFT, padx=5)
+            
+            self.market_insights_button = tk.Button(self.hybrid_buttons_frame, text="🌍 Market Insights", 
+                                                   command=self.show_market_insights, bg='lightyellow')
+            self.market_insights_button.pack(side=tk.LEFT, padx=5)
 
         # AI Component
         self.chat_frame = tk.Frame(root)
@@ -181,6 +212,17 @@ class QuantSphereGUI:
 
         # Initialize technical indicators
         self.technical_indicators = TechnicalIndicators()
+        
+        # Initialize Hybrid AI system
+        if HYBRID_AI_AVAILABLE:
+            hybrid_config = {
+                'openai_api_key': os.getenv("OPENAI_API_KEY"),
+                'performance_file': 'quantsphere_hybrid_performance.json'
+            }
+            self.hybrid_ai = QuantSphereHybridAI(hybrid_config)
+            print("🧠 Hybrid AI integration initialized")
+        else:
+            self.hybrid_ai = None
         
         # Load saved data
         self.trade_history = self.load_trade_history()
@@ -520,7 +562,7 @@ class QuantSphereGUI:
             return {}
     
     def trading_logic(self, symbol, current_price):
-        """Enhanced trading logic with technical indicators"""
+        """Enhanced trading logic with technical indicators and optional hybrid AI"""
         equity = self.equities[symbol]
         
         # Get technical signals
@@ -542,6 +584,29 @@ class QuantSphereGUI:
             strength = 0
             equity['technical_signal'] = 'HOLD'
             equity['rsi'] = 50
+        
+        # Optionally enhance with Hybrid AI (if available and enabled)
+        hybrid_signal = signal  # Default to technical signal
+        hybrid_confidence = 0.5
+        
+        if HYBRID_AI_AVAILABLE and self.hybrid_ai and hasattr(equity, 'use_hybrid_ai') and equity.get('use_hybrid_ai', False):
+            try:
+                # Get hybrid AI analysis (cached for performance)
+                hybrid_analysis = self.hybrid_ai.get_enhanced_analysis(symbol)
+                hybrid_signal = hybrid_analysis['hybrid_recommendation']
+                hybrid_confidence = hybrid_analysis['confidence']
+                
+                print(f"🧠 Hybrid AI for {symbol}: {hybrid_signal} (confidence: {hybrid_confidence:.2f})")
+                
+                # Use hybrid signal if confidence is high
+                if hybrid_confidence > 0.7:
+                    signal = hybrid_signal
+                    strength = hybrid_confidence
+                    print(f"✅ Using Hybrid AI signal for {symbol}: {signal}")
+                
+            except Exception as e:
+                print(f"⚠️ Hybrid AI error for {symbol}: {e}")
+                # Fall back to technical analysis
         
         # Enhanced trading logic combining price levels and technical signals
         if equity['position'] == 0:  # No position
@@ -659,6 +724,288 @@ class QuantSphereGUI:
             visualizer.create_main_chart_window()
         except Exception as e:
             messagebox.showerror("Charts Error", f"Error opening charts: {e}")
+    
+    def show_hybrid_analysis(self):
+        """Show hybrid AI analysis for selected stock"""
+        if not HYBRID_AI_AVAILABLE or not self.hybrid_ai:
+            messagebox.showwarning("Hybrid AI", "Hybrid AI system not available")
+            return
+        
+        selected_items = self.tree.selection()
+        if not selected_items:
+            messagebox.showwarning("Selection", "Please select a stock to analyze")
+            return
+        
+        symbol = self.tree.item(selected_items[0])['values'][0]
+        
+        # Show loading message
+        loading_window = tk.Toplevel(self.root)
+        loading_window.title("Analyzing...")
+        loading_window.geometry("300x100")
+        tk.Label(loading_window, text=f"🧠 Analyzing {symbol} with Hybrid AI...", 
+                font=('Arial', 12)).pack(expand=True)
+        loading_window.update()
+        
+        try:
+            # Get hybrid analysis
+            analysis = self.hybrid_ai.get_enhanced_analysis(symbol)
+            loading_window.destroy()
+            
+            # Create analysis window
+            self.create_hybrid_analysis_window(symbol, analysis)
+            
+        except Exception as e:
+            loading_window.destroy()
+            messagebox.showerror("Analysis Error", f"Error analyzing {symbol}: {e}")
+    
+    def create_hybrid_analysis_window(self, symbol, analysis):
+        """Create window to display hybrid analysis results"""
+        window = tk.Toplevel(self.root)
+        window.title(f"🧠 Hybrid AI Analysis - {symbol}")
+        window.geometry("800x600")
+        
+        # Create scrollable frame
+        canvas = tk.Canvas(window)
+        scrollbar = ttk.Scrollbar(window, orient="vertical", command=canvas.yview)
+        scrollable_frame = ttk.Frame(canvas)
+        
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+        
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+        
+        # Header
+        header_frame = tk.Frame(scrollable_frame, bg='navy')
+        header_frame.pack(fill='x', pady=5)
+        tk.Label(header_frame, text=f"🧠 Hybrid AI Analysis: {symbol}", 
+                font=('Arial', 16, 'bold'), fg='white', bg='navy').pack(pady=10)
+        
+        # Overall Recommendation
+        rec_frame = tk.Frame(scrollable_frame, relief='raised', bd=2)
+        rec_frame.pack(fill='x', padx=10, pady=5)
+        
+        tk.Label(rec_frame, text="📊 HYBRID RECOMMENDATION", 
+                font=('Arial', 14, 'bold')).pack()
+        
+        rec_text = f"Recommendation: {analysis['hybrid_recommendation']}\n"
+        rec_text += f"Confidence: {analysis['confidence']:.2f}\n"
+        rec_text += f"Expected Alpha: {analysis['expected_alpha']:.2%}\n"
+        rec_text += f"Risk Score: {analysis['risk_score']:.2f}"
+        
+        tk.Label(rec_frame, text=rec_text, font=('Arial', 12), justify='left').pack(pady=5)
+        
+        # AI Analysis Section
+        ai_frame = tk.Frame(scrollable_frame, relief='raised', bd=2)
+        ai_frame.pack(fill='x', padx=10, pady=5)
+        
+        tk.Label(ai_frame, text="🤖 AI ANALYSIS", font=('Arial', 14, 'bold')).pack()
+        
+        ai_text = f"Recommendation: {analysis['ai_analysis']['recommendation']}\n"
+        ai_text += f"Confidence: {analysis['ai_analysis']['confidence']:.2f}\n"
+        ai_text += f"Technical Signal: {analysis['ai_analysis']['technical_signal']}\n"
+        ai_text += f"Price Prediction: ${analysis['ai_analysis']['price_prediction']:.2f}\n"
+        ai_text += f"Risk Score: {analysis['ai_analysis']['risk_score']:.2f}"
+        
+        tk.Label(ai_frame, text=ai_text, font=('Arial', 10), justify='left').pack(pady=5)
+        
+        # Technical Reasoning
+        if analysis['ai_analysis']['reasoning']:
+            tk.Label(ai_frame, text="Technical Reasoning:", font=('Arial', 10, 'bold')).pack(anchor='w')
+            for reason in analysis['ai_analysis']['reasoning']:
+                tk.Label(ai_frame, text=f"• {reason}", font=('Arial', 9), 
+                        wraplength=700, justify='left').pack(anchor='w', padx=20)
+        
+        # Human Analysis Section
+        human_frame = tk.Frame(scrollable_frame, relief='raised', bd=2)
+        human_frame.pack(fill='x', padx=10, pady=5)
+        
+        tk.Label(human_frame, text="🧠 HUMAN-LIKE AI ANALYSIS", font=('Arial', 14, 'bold')).pack()
+        
+        human_text = f"Recommendation: {analysis['human_analysis']['recommendation']}\n"
+        human_text += f"Confidence: {analysis['human_analysis']['confidence']:.2f}\n"
+        human_text += f"Company Assessment: {analysis['human_analysis']['company_assessment'][:100]}...\n"
+        human_text += f"Market Sentiment: {analysis['human_analysis']['market_sentiment'][:100]}..."
+        
+        tk.Label(human_frame, text=human_text, font=('Arial', 10), justify='left', 
+                wraplength=700).pack(pady=5)
+        
+        # Opportunities and Risks
+        if analysis['human_analysis']['opportunities']:
+            tk.Label(human_frame, text="💡 Key Opportunities:", font=('Arial', 10, 'bold')).pack(anchor='w')
+            for opp in analysis['human_analysis']['opportunities']:
+                tk.Label(human_frame, text=f"• {opp}", font=('Arial', 9), 
+                        wraplength=700, justify='left').pack(anchor='w', padx=20)
+        
+        if analysis['human_analysis']['risks']:
+            tk.Label(human_frame, text="⚠️ Key Risks:", font=('Arial', 10, 'bold')).pack(anchor='w')
+            for risk in analysis['human_analysis']['risks']:
+                tk.Label(human_frame, text=f"• {risk}", font=('Arial', 9), 
+                        wraplength=700, justify='left').pack(anchor='w', padx=20)
+        
+        # Weighting Information
+        weight_frame = tk.Frame(scrollable_frame, relief='raised', bd=2)
+        weight_frame.pack(fill='x', padx=10, pady=5)
+        
+        tk.Label(weight_frame, text="⚖️ ADAPTIVE WEIGHTING", font=('Arial', 14, 'bold')).pack()
+        
+        weight_text = f"AI Weight: {analysis['weighting']['ai_weight']:.1%}\n"
+        weight_text += f"Human Weight: {analysis['weighting']['human_weight']:.1%}\n"
+        weight_text += f"Rationale: {analysis['weighting']['rationale'][:200]}..."
+        
+        tk.Label(weight_frame, text=weight_text, font=('Arial', 10), justify='left', 
+                wraplength=700).pack(pady=5)
+        
+        # Performance Metrics
+        perf_frame = tk.Frame(scrollable_frame, relief='raised', bd=2)
+        perf_frame.pack(fill='x', padx=10, pady=5)
+        
+        tk.Label(perf_frame, text="📈 PERFORMANCE METRICS", font=('Arial', 14, 'bold')).pack()
+        
+        perf_text = f"Processing Time: {analysis['performance']['processing_time']:.2f}s\n"
+        perf_text += f"Data Completeness: {analysis['performance']['data_completeness']:.1%}\n"
+        perf_text += f"Data Freshness: {analysis['performance']['data_freshness']}\n"
+        perf_text += f"Risk-Adjusted Score: {analysis['performance']['risk_adjusted_score']:.3f}"
+        
+        tk.Label(perf_frame, text=perf_text, font=('Arial', 10), justify='left').pack(pady=5)
+        
+        # Pack canvas and scrollbar
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+    
+    def show_portfolio_recommendations(self):
+        """Show portfolio recommendations from hybrid AI"""
+        if not HYBRID_AI_AVAILABLE or not self.hybrid_ai:
+            messagebox.showwarning("Hybrid AI", "Hybrid AI system not available")
+            return
+        
+        symbols = list(self.equities.keys())
+        if not symbols:
+            messagebox.showwarning("Portfolio", "No stocks in portfolio to analyze")
+            return
+        
+        # Show loading
+        loading_window = tk.Toplevel(self.root)
+        loading_window.title("Analyzing Portfolio...")
+        loading_window.geometry("350x100")
+        tk.Label(loading_window, text="🧠 Analyzing portfolio with Hybrid AI...", 
+                font=('Arial', 12)).pack(expand=True)
+        loading_window.update()
+        
+        try:
+            recommendations = self.hybrid_ai.get_portfolio_recommendations(symbols, top_n=5)
+            loading_window.destroy()
+            
+            # Create recommendations window
+            self.create_recommendations_window(recommendations)
+            
+        except Exception as e:
+            loading_window.destroy()
+            messagebox.showerror("Analysis Error", f"Error analyzing portfolio: {e}")
+    
+    def create_recommendations_window(self, recommendations):
+        """Create window to display portfolio recommendations"""
+        window = tk.Toplevel(self.root)
+        window.title("📊 Hybrid AI Portfolio Recommendations")
+        window.geometry("900x500")
+        
+        # Header
+        header_frame = tk.Frame(window, bg='darkgreen')
+        header_frame.pack(fill='x', pady=5)
+        tk.Label(header_frame, text="📊 Portfolio Recommendations", 
+                font=('Arial', 16, 'bold'), fg='white', bg='darkgreen').pack(pady=10)
+        
+        # Create treeview for recommendations
+        columns = ("Rank", "Symbol", "Recommendation", "Confidence", "Expected Alpha", "Risk Score", "AI Weight")
+        tree = ttk.Treeview(window, columns=columns, show='headings', height=15)
+        
+        for col in columns:
+            tree.heading(col, text=col)
+            tree.column(col, width=120)
+        
+        # Populate recommendations
+        for rec in recommendations:
+            tree.insert("", "end", values=(
+                rec['rank'],
+                rec['symbol'],
+                rec['recommendation'],
+                f"{rec['confidence']:.2f}",
+                f"{rec['expected_alpha']:.2%}",
+                f"{rec['risk_score']:.2f}",
+                f"{rec['ai_weight']:.1%}"
+            ))
+        
+        tree.pack(fill='both', expand=True, padx=10, pady=10)
+        
+        # Add scrollbar
+        scrollbar = ttk.Scrollbar(window, orient="vertical", command=tree.yview)
+        tree.configure(yscrollcommand=scrollbar.set)
+        scrollbar.pack(side="right", fill="y")
+    
+    def show_market_insights(self):
+        """Show market insights from hybrid AI"""
+        if not HYBRID_AI_AVAILABLE or not self.hybrid_ai:
+            messagebox.showwarning("Hybrid AI", "Hybrid AI system not available")
+            return
+        
+        symbols = list(self.equities.keys())
+        if not symbols:
+            messagebox.showwarning("Portfolio", "No stocks in portfolio to analyze")
+            return
+        
+        try:
+            insights = self.hybrid_ai.get_market_insights(symbols)
+            
+            # Create insights window
+            window = tk.Toplevel(self.root)
+            window.title("🌍 Hybrid AI Market Insights")
+            window.geometry("600x400")
+            
+            # Header
+            header_frame = tk.Frame(window, bg='purple')
+            header_frame.pack(fill='x', pady=5)
+            tk.Label(header_frame, text="🌍 Market Insights", 
+                    font=('Arial', 16, 'bold'), fg='white', bg='purple').pack(pady=10)
+            
+            # Create scrollable text
+            text_frame = tk.Frame(window)
+            text_frame.pack(fill='both', expand=True, padx=10, pady=10)
+            
+            text_widget = tk.Text(text_frame, wrap='word', font=('Arial', 11))
+            scrollbar = ttk.Scrollbar(text_frame, orient="vertical", command=text_widget.yview)
+            text_widget.configure(yscrollcommand=scrollbar.set)
+            
+            # Format insights
+            insights_text = "🤖 AI SENTIMENT ANALYSIS\n"
+            insights_text += f"Bullish Signals: {insights['ai_sentiment']['bullish_signals']}\n"
+            insights_text += f"Bearish Signals: {insights['ai_sentiment']['bearish_signals']}\n"
+            insights_text += f"Overall AI Bias: {insights['ai_sentiment']['overall_bias']}\n\n"
+            
+            insights_text += "🧠 HUMAN-LIKE SENTIMENT ANALYSIS\n"
+            insights_text += f"Bullish Signals: {insights['human_sentiment']['bullish_signals']}\n"
+            insights_text += f"Bearish Signals: {insights['human_sentiment']['bearish_signals']}\n"
+            insights_text += f"Overall Human Bias: {insights['human_sentiment']['overall_bias']}\n\n"
+            
+            insights_text += "💡 KEY OPPORTUNITIES\n"
+            for opp in insights['key_opportunities']:
+                insights_text += f"• {opp}\n"
+            
+            insights_text += "\n⚠️ KEY RISKS\n"
+            for risk in insights['key_risks']:
+                insights_text += f"• {risk}\n"
+            
+            insights_text += f"\n📊 Analysis Coverage: {insights['analysis_coverage']} stocks"
+            
+            text_widget.insert('1.0', insights_text)
+            text_widget.config(state='disabled')
+            
+            text_widget.pack(side="left", fill="both", expand=True)
+            scrollbar.pack(side="right", fill="y")
+            
+        except Exception as e:
+            messagebox.showerror("Insights Error", f"Error getting market insights: {e}")
     
     def on_close(self):
         self.running = False
